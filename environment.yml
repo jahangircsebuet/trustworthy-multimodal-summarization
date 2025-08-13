@@ -1,0 +1,48 @@
+name: newsumm
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pip
+  # --- PyTorch w/ CUDA 12.1 ---
+  - pytorch
+  - torchvision
+  - torchaudio
+  - pytorch-cuda=12.1
+  # --- Core scientific stack ---
+  - numpy
+  - pandas
+  - scipy
+  - scikit-learn
+  - pillow
+  - opencv
+  - tqdm
+  - pyyaml
+  - nltk
+  - textstat
+  - ffmpeg
+  - tesseract
+  - git
+  # (faiss-gpu can be tricky to resolve; faiss-cpu is fine for most RAG)
+  - faiss-cpu
+  - pip:
+      - transformers
+      - datasets
+      - accelerate
+      - peft
+      - bitsandbytes            # GPU quantization
+      - sentence-transformers
+      - chromadb
+      - rouge-score
+      - sacrebleu
+      - bert-score
+      - pytesseract             # wrapper for tesseract
+      - easyocr
+      - faster-whisper
+      - ffmpeg-python
+      - open-clip-torch
+      - gpustat
+      - pynvml
+      - psutil
