@@ -13,8 +13,32 @@ def pack_text(out_dir: str, rec_id: str, post_text: str, ocr_items, asr_obj, cap
     if captions:
         parts += [SECTION("CAPTIONS"), "\n".join(f"[{i+1}] {c['path']}: {c['caption']}" for i,c in enumerate(captions))]
     txt = "\n".join(parts).strip()
+
+    print("txt: ", txt)
+    
     os.makedirs(out_dir, exist_ok=True)
     textbag = os.path.join(out_dir, f"{rec_id}_textbag.txt")
     with open(textbag, "w", encoding="utf-8") as f:
         f.write(txt)
     return textbag
+
+
+if __name__ == "__main__":
+    # What the output looks like (example)
+    # === POST_TEXT ===
+    # <original post text>
+
+    # === TRANSLATION_EN ===
+    # <english translation if provided>
+
+    # === OCR ===
+    # [1] img1.jpg: Stop sign ahead
+    # [2] img2.jpg: Main Street
+
+    # === ASR ===
+    # Hello and welcome to the event.
+
+    # === CAPTIONS ===
+    # [1] img1.jpg: A person holding a trophy
+    # [2] img2.jpg: Crowd at night
+    print("do later")
