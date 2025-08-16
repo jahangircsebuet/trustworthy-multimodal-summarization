@@ -1,0 +1,95 @@
+[
+  {
+    "id": "post_0001",
+    "lang": "en",
+    "text": "City FC clinched the national cup after a tense penalty shootout. Fans gathered downtown for celebrations late into the night.",
+    "images": [
+      "https://picsum.photos/id/1025/1200/800",
+      "https://picsum.photos/id/1069/1200/800"
+    ],
+    "video": "https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+  },
+  {
+    "id": "post_0002",
+    "lang": "es",
+    "text": "Alerta: Se espera tormenta tropical este fin de semana. Las autoridades recomiendan asegurar ventanas y evitar conducir en zonas inundables.",
+    "images": [
+      "https://picsum.photos/id/1003/1200/800"
+    ],
+    "video": null
+  },
+  {
+    "id": "post_0003",
+    "lang": "bn",
+    "text": "পহেলা বৈশাখ উপলক্ষে শহরের কেন্দ্রে মঙ্গল শোভাযাত্রা অনুষ্ঠিত হয়েছে। স্থানীয় শিল্পীরা নাচ ও গান পরিবেশন করেন।",
+    "images": [
+      "https://picsum.photos/id/1050/1200/800",
+      "https://picsum.photos/id/1041/1200/800"
+    ],
+    "video": "https://storage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4"
+  },
+  {
+    "id": "post_0004",
+    "lang": "en",
+    "text": "Highlights from AI Summit 2025: several labs demoed multimodal assistants and efficient RAG stacks for enterprise workflows.",
+    "images": [
+      "https://picsum.photos/id/1011/1200/800"
+    ],
+    "video": null
+  },
+  {
+    "id": "post_0005",
+    "lang": "fr",
+    "text": "Incendies de forêt : évacuations préventives en cours dans le secteur nord. Les pompiers demandent de libérer les voies d’accès.",
+    "images": [
+      "https://picsum.photos/id/1022/1200/800"
+    ],
+    "video": "https://storage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4"
+  },
+  {
+    "id": "post_0006",
+    "lang": "de",
+    "text": "Bahnverkehr: Verspätungen nach einem Signalfehler zwischen Hbf und Westkreuz. Bitte alternative Routen prüfen.",
+    "images": [
+      "https://picsum.photos/id/1035/1200/800"
+    ],
+    "video": null
+  },
+  {
+    "id": "post_0007",
+    "lang": "en",
+    "text": "Community clinic will run a free vaccination drive on Saturday, 9am–3pm. Bring ID and previous records if available.",
+    "images": [
+      "https://picsum.photos/id/1027/1200/800"
+    ],
+    "video": null
+  },
+  {
+    "id": "post_0008",
+    "lang": "en",
+    "text": "Safety notice: Brand X has issued a voluntary recall for its 500ml stainless bottles due to potential leak risk.",
+    "images": [
+      "https://picsum.photos/id/1074/1200/800"
+    ],
+    "video": "https://storage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4"
+  },
+  {
+    "id": "post_0009",
+    "lang": "en",
+    "text": "Charity marathon results are in! Over 4,000 runners participated and raised funds for local education programs.",
+    "images": [
+      "https://picsum.photos/id/1016/1200/800",
+      "https://picsum.photos/id/1004/1200/800"
+    ],
+    "video": null
+  },
+  {
+    "id": "post_0010",
+    "lang": "hi",
+    "text": "नगर निगम ने मानसून सफाई अभियान शुरू किया है। नागरिकों से अनुरोध है कि कचरा निर्दिष्ट स्थान पर ही डालें।",
+    "images": [
+      "https://picsum.photos/id/1039/1200/800"
+    ],
+    "video": "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4"
+  }
+]
