@@ -1,0 +1,13 @@
+=== POST_TEXT ===
+
+Alerta: Se espera tormenta tropical este fin de semana. Las autoridades recomiendan asegurar ventanas y evitar conducir en zonas inundables.
+
+
+=== OCR ===
+
+[1] https://fastly.picsum.photos/id/1069/1200/800.jpg?hmac=63TjgsEyQxt1pHPdfvU7K_iy87boSB1ndTaygQeiU2U: 
+
+
+=== CAPTIONS ===
+
+[1] https://fastly.picsum.photos/id/1069/1200/800.jpg?hmac=63TjgsEyQxt1pHPdfvU7K_iy87boSB1ndTaygQeiU2U:

@@ -1,0 +1,13 @@
+=== POST_TEXT ===
+
+City FC clinched the national cup after a tense penalty shootout. Fans gathered downtown for celebrations late into the night.
+
+
+=== OCR ===
+
+[1] https://fastly.picsum.photos/id/1025/1200/800.jpg?hmac=h0OQ1VLKTkk5MHLKv5Wi_bADWP-hPutr8qcGjdRrmYQ: 
+
+
+=== CAPTIONS ===
+
+[1] https://fastly.picsum.photos/id/1025/1200/800.jpg?hmac=h0OQ1VLKTkk5MHLKv5Wi_bADWP-hPutr8qcGjdRrmYQ:
