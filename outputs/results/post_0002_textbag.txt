@@ -10,4 +10,4 @@ Alerta: Se espera tormenta tropical este fin de semana. Las autoridades recomien
 
 === CAPTIONS ===
 
-[1] https://fastly.picsum.photos/id/1069/1200/800.jpg?hmac=63TjgsEyQxt1pHPdfvU7K_iy87boSB1ndTaygQeiU2U:
+[1] https://fastly.picsum.photos/id/1069/1200/800.jpg?hmac=63TjgsEyQxt1pHPdfvU7K_iy87boSB1ndTaygQeiU2U: a jellyfish swimming in the water
