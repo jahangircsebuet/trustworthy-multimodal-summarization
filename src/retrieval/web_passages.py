@@ -22,6 +22,7 @@ def build_web_passages(results: List[Dict], max_passages_per_page: int = 5,
     """
     From google_cse() results -> fetch page -> extract article -> split to passages -> embed all passages.
     Returns (embs, passages, meta), with embs normalized for cosine/IP.
+    fetch, extract, chunk, embed
     """
     passages: List[str] = []
     meta: List[Dict] = []

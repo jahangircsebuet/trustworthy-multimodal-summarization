@@ -1,116 +1,120 @@
-digraph Idea1_RAG_Verify_Labeled_Min {
-  graph [fontname="Helvetica", newrank=true, dpi=110, pad="0.2", nodesep="0.20", ranksep="0.30"];
-  rankdir=TB;
+digraph GMMS_FullDiagram {
+  graph [fontname="Helvetica", dpi=110, pad="0.2", nodesep="0.25", ranksep="0.45"];
+  rankdir=LR;
   fontsize=10;
-  fontname="Helvetica";
-  node [shape=rect, fontsize=10, fontname="Helvetica", style="filled,rounded"];
+  node  [shape=rect, fontsize=10, fontname="Helvetica", style="filled,rounded"];
 
-  /* ================= Legend (TOP) ================= */
+  /* =============== Legend (Top) =============== */
   subgraph cluster_legend {
     label="Legend (Top)";
     style="rounded,dashed"; color="#B0BEC5"; fillcolor="#FAFAFA";
-    L1 [label="📥 Sources  [0]", shape=note, fillcolor="#F5F5F5"];
-    L2 [label="🧩 Perception [1A–2]", shape=note, fillcolor="#E3F2FD"];
-    L3 [label="🔎 Retrieval  [3–6]", shape=note, fillcolor="#EDE7F6"];
-    L4 [label="✍️ Generation [7–8]", shape=note, fillcolor="#E8F5E9"];
-    L5 [label="🛡️ Guards    [9–14]", shape=note, fillcolor="#FFF3E0"];
-    L6 [label="📊 Evaluation [15–17]", shape=note, fillcolor="#ECEFF1"];
-    { rank=source; L1; L2; L3; L4; L5; L6 }
-    L1 -> L2 [style=invis, weight=50]; L2 -> L3 [style=invis, weight=50];
-    L3 -> L4 [style=invis, weight=50]; L4 -> L5 [style=invis, weight=50];
-    L5 -> L6 [style=invis, weight=50];
+    LG_S [label="🧺 Inputs from platform",           shape=note, fillcolor="#F5F5F5"];
+    LG_P [label="🧩 Perception [1A–2]\nTranslate, OCR, Caption, ASR, Pack", shape=note, fillcolor="#E3F2FD"];
+    LG_R [label="🔎 Retrieval [3–6]\nChunk, Embed, Index, Retrieve",         shape=note, fillcolor="#EDE7F6"];
+    LG_G [label="✍️ Generation [7–8]\nPrompt, Draft",                        shape=note, fillcolor="#E8F5E9"];
+    LG_V [label="🛡️ Guards [9–14]\nQG, QA, NLI, CLIP*, Aggregate, Revise",  shape=note, fillcolor="#FFF3E0"];
+    LG_E [label="📊 Evaluation [15–17]\nOutput, Metrics, Logs",               shape=note, fillcolor="#ECEFF1"];
+    { rank=same; LG_S; LG_P; LG_R; LG_G; LG_V; LG_E }
   }
 
-  /* ================= Sources (collapsed hub) ================= */
+  /* =============== Data Sources =============== */
   subgraph cluster_sources {
     label="📥 Data Sources [0]";
     style=rounded; color="#B0BEC5"; fillcolor="#F5F5F5";
-    SRC [label="[0] 📥 Sources Hub", fillcolor="#FFFFFF", color="#90A4AE", shape=folder];
-    T   [label="📝 Post Text",      fillcolor="#FFFFFF", color="#CFD8DC"];
-    I   [label="🖼️ Images/Memes",   fillcolor="#FFFFFF", color="#CFD8DC"];
-    V   [label="🎥 Short Videos",   fillcolor="#FFFFFF", color="#CFD8DC"];
-    KB  [label="📚 External KB (opt.)", shape=cylinder, fillcolor="#FFFFFF", color="#CFD8DC"];
-    T -> I [style=invis]; I -> V [style=invis]; V -> KB [style=invis]; KB -> SRC [style=invis];
+    S_TEXT  [label="[0] 📝 Social Post Text",    fillcolor="#FFFFFF", color="#90A4AE", shape=folder];
+    S_IMG   [label="[0] 🖼️ Images / Memes",     fillcolor="#FFFFFF", color="#CFD8DC"];
+    S_VID   [label="[0] 🎥 Short Videos",       fillcolor="#FFFFFF", color="#CFD8DC"];
+    S_KB    [label="[0*] 📚 External KB (optional)", fillcolor="#FFFFFF", color="#CFD8DC", shape=cylinder];
   }
 
-  /* ================= Perception ================= */
+  /* =============== Perception & Normalization =============== */
   subgraph cluster_perception {
     label="🧩 Perception & Normalization";
     style=rounded; color="#90CAF9"; fillcolor="#E3F2FD";
-    TRN [label="[1A] 🈶 Translate → EN (opt.)",    fillcolor="#E3F2FD", color="#64B5F6"];
-    OCR [label="[1B] 🔡 OCR (Tesseract/EasyOCR)",   fillcolor="#E3F2FD", color="#64B5F6"];
-    CAP [label="[1C] 🖼️ Captioning (BLIP/BLIP-2)", fillcolor="#E3F2FD", color="#64B5F6"];
-    ASR [label="[1D] 🎙️ ASR (Faster-Whisper)",     fillcolor="#E3F2FD", color="#64B5F6"];
-    PK  [label="[2]  🧺 Pack Textbag",             fillcolor="#BBDEFB", color="#42A5F5"];
-    TRN -> OCR [style=invis]; OCR -> CAP [style=invis]; CAP -> ASR [style=invis]; ASR -> PK [style=invis];
+    P_TRN  [label="[1A] 🈶 Translate → EN (opt.)",    fillcolor="#E3F2FD", color="#64B5F6"];
+    P_OCR  [label="[1B] 🔡 OCR (Tesseract/EasyOCR)",   fillcolor="#E3F2FD", color="#64B5F6"];
+    P_CAP  [label="[1C] 🖼️ Captioning (BLIP/BLIP-2)", fillcolor="#E3F2FD", color="#64B5F6"];
+    P_ASR  [label="[1D] 🎙️ ASR (Faster-Whisper)",     fillcolor="#E3F2FD", color="#64B5F6"];
+    P_PACK [label="[2]  🧺 Pack Textbag",              fillcolor="#BBDEFB", color="#42A5F5"];
   }
 
-  /* ================= Retrieval ================= */
+  /* =============== Retrieval =============== */
   subgraph cluster_retrieval {
     label="🔎 Retrieval";
     style=rounded; color="#B39DDB"; fillcolor="#EDE7F6";
-    CHK [label="[3] ✂️ Chunk to Passages",     fillcolor="#EDE7F6", color="#9575CD"];
-    EMB [label="[4] 🧬 Embed (MiniLM)",        fillcolor="#EDE7F6", color="#9575CD"];
-    IDX [label="[5] 📦 FAISS Index", shape=cylinder, fillcolor="#D1C4E9", color="#7E57C2"];
-    RET [label="[6] 🔍 Retrieve k Snippets",   fillcolor="#D1C4E9", color="#7E57C2"];
-    CHK -> EMB [style=invis]; EMB -> IDX [style=invis]; IDX -> RET [style=invis];
+    R_CHK  [label="[3] ✂️ Chunk to Passages",  fillcolor="#EDE7F6", color="#9575CD"];
+    R_EMB  [label="[4] 🧬 Embed (MiniLM)",     fillcolor="#EDE7F6", color="#9575CD"];
+    R_IDX  [label="[5] 📦 FAISS Index",        fillcolor="#D1C4E9", color="#7E57C2", shape=cylinder];
+    R_RET  [label="[6] 🔍 Retrieve k Snippets",fillcolor="#D1C4E9", color="#7E57C2"];
   }
 
-  /* ================= Generation ================= */
+  /* =============== Grounded Generation =============== */
   subgraph cluster_generation {
     label="✍️ Grounded Generation";
     style=rounded; color="#A5D6A7"; fillcolor="#E8F5E9";
-    PR  [label="[7] 🧾 Prompt Builder\n(EVIDENCE + [refN])", fillcolor="#E8F5E9", color="#81C784"];
-    GEN [label="[8] 📝 Draft Summary\n(Flan-T5)",            fillcolor="#C8E6C9", color="#66BB6A"];
-    PR -> GEN [style=invis];
+    G_PR   [label="[7] 🧾 Prompt Builder\n(EVIDENCE + [refN])", fillcolor="#E8F5E9", color="#81C784"];
+    G_GEN  [label="[8] 📝 Draft Summary (Flan-T5)",            fillcolor="#C8E6C9", color="#66BB6A"];
   }
 
-  /* ================= Guards ================= */
+  /* =============== Safety Guards & Revision =============== */
   subgraph cluster_guards {
     label="🛡️ Safety Guards & Revision";
     style=rounded; color="#FFCC80"; fillcolor="#FFF3E0";
-    QG  [label="[9] ❓ QG (T5)",                        fillcolor="#FFF3E0", color="#FFB74D"];
-    QA  [label="[10] ✅ QA over Evidence",              fillcolor="#FFE0B2", color="#FFA726"];
-    NLI [label="[11] ⚖️ NLI (MNLI)",                    fillcolor="#FFE0B2", color="#FFA726"];
-    CLIP [label="[12*] 🖼️🔗 CLIP Consistency (opt.)",    fillcolor="#FFF8E1", color="#FFB74D", style="filled,rounded,dashed"];
-    AGR [label="[13] 🧮 Guard Aggregation",             fillcolor="#FFE0B2", color="#FB8C00"];
-    REV [label="[14] 🧽 LLM Revision",                  fillcolor="#FFCC80", color="#F57C00"];
-    QG -> QA [style=invis]; QA -> NLI [style=invis]; NLI -> CLIP [style=invis]; CLIP -> AGR [style=invis]; AGR -> REV [style=invis];
+    V_QG   [label="[9] ❓ QG (T5)",                    fillcolor="#FFF3E0", color="#FFB74D"];
+    V_QA   [label="[10] ✅ QA over Evidence",          fillcolor="#FFE0B2", color="#FFA726"];
+    V_NLI  [label="[11] ⚖️ NLI (MNLI)",               fillcolor="#FFE0B2", color="#FFA726"];
+    V_CLIP [label="[12*] 🖼️🔗 CLIP Consistency (opt.)", fillcolor="#FFF8E1", color="#FFB74D", style="filled,rounded,dashed"];
+    V_AGR  [label="[13] 🧮 Guard Aggregation",        fillcolor="#FFE0B2", color="#FB8C00"];
+    V_REV  [label="[14] 🔁 LLM Revision",             fillcolor="#FFCC80", color="#F57C00"];
   }
 
-  /* ================= Evaluation ================= */
+  /* =============== Evaluation & Logging =============== */
   subgraph cluster_eval {
     label="📊 Evaluation & Logging";
     style=rounded; color="#B0BEC5"; fillcolor="#ECEFF1";
-    OUT [label="[15] ✅ Final Trusted Summary", shape=doubleoctagon, fillcolor="#CFD8DC", color="#90A4AE"];
-    MET [label="[16] 📈 Metrics (ROUGE/BERT/Guard)", fillcolor="#ECEFF1", color="#90A4AE"];
-    LOG [label="[17] 🗄️ Artifacts (prompts/indexes/\ndrafts/revisions/metrics)", shape=cylinder, fillcolor="#ECEFF1", color="#90A4AE"];
-    OUT -> MET [style=invis]; MET -> LOG [style=invis];
+    E_OUT  [label="[15] ✅ Final Trusted Summary", shape=doubleoctagon, fillcolor="#CFD8DC", color="#90A4AE"];
+    E_MET  [label="[16] 📈 Metrics (ROUGE/BERT/Guard)", fillcolor="#ECEFF1", color="#90A4AE"];
+    E_LOG  [label="[17] 🗄️ Artifacts (prompts/indexes/\ndrafts/revisions/metrics)", shape=cylinder, fillcolor="#ECEFF1", color="#90A4AE"];
   }
 
-  /* ===== Align compact columns ===== */
-  { rank=same; SRC; PK; CHK; PR; AGR; OUT }
-  L3 -> SRC [style=invis, weight=100]; /* keep legend on top */
+  /* =============== Main Flow (solid) =============== */
+  S_TEXT -> P_TRN  [color="#90A4AE"];
+  S_IMG  -> P_OCR  [color="#90A4AE"];
+  S_IMG  -> P_CAP  [color="#90A4AE"];
+  S_VID  -> P_ASR  [color="#90A4AE"];
 
-  /* ===== Main flow with concise labels ===== */
-  SRC -> PK  [label="text + images + video → OCR/ASR/captions/translate → textbag", fontcolor="#455A64", color="#90A4AE"];
-  PK  -> CHK [label="textbag.txt → passages", fontcolor="#1E88E5", color="#42A5F5"];
-  CHK -> RET [label="passages → embeddings → FAISS → top-k", fontcolor="#5E35B1", color="#7E57C2"];
-  RET -> PR  [label="evidence [ref1..N]", fontcolor="#5E35B1", color="#7E57C2"];
-  PR  -> GEN [label="prompt (EVIDENCE + rules + cites)", fontcolor="#2E7D32", color="#66BB6A"];
-  GEN -> AGR [label="draft s₀ (sentences + [refN])", fontcolor="#EF6C00", color="#FB8C00"];
-  AGR -> REV [label="flags → edit instructions", fontcolor="#E65100", color="#F57C00"];
-  REV -> OUT [label="revised s₁ (grounded, cite-clean)", fontcolor="#37474F", color="#90A4AE"];
-  OUT -> MET [label="ROUGE / BERT / guard-score", fontcolor="#37474F", color="#90A4AE"];
-  MET -> LOG [label="store metrics + prompts + indices + drafts", fontcolor="#37474F", color="#90A4AE"];
+  P_TRN  -> P_PACK [color="#42A5F5"];
+  P_OCR  -> P_PACK [color="#42A5F5"];
+  P_CAP  -> P_PACK [color="#42A5F5"];
+  P_ASR  -> P_PACK [color="#42A5F5"];
 
-  /* ===== Minimal optional/context arrows (kept sparse) ===== */
-  KB  -> RET  [style=dotted, color="#7E57C2", fontcolor="#5E35B1",
-               label="external snippets → augment evidence"];
-  I   -> CLIP [style=dashed, color="#FFB74D", fontcolor="#E65100",
-               label="images/keyframes"];
-  GEN -> CLIP [style=dashed, color="#FFB74D", fontcolor="#E65100",
-               label="candidate sentences"];
-  CLIP-> AGR  [style=dashed, color="#FFB74D", fontcolor="#E65100",
-               label="image–text similarity"];
+  P_PACK -> R_CHK  [color="#42A5F5", label="textbag.txt"];
+  R_CHK  -> R_EMB  [color="#7E57C2"];
+  R_EMB  -> R_IDX  [color="#7E57C2"];
+  R_IDX  -> R_RET  [color="#7E57C2", label="top-k"];
+
+  R_RET  -> G_PR   [color="#7E57C2", label="evidence [ref1..N]"];
+  G_PR   -> G_GEN  [color="#66BB6A", label="prompt"];
+
+  /* Guards driving revision */
+  G_GEN  -> V_QG   [color="#FB8C00"];
+  G_GEN  -> V_NLI  [color="#FB8C00"];
+  G_GEN  -> V_QA   [color="#FB8C00"];
+  V_QA   -> V_AGR  [color="#FB8C00"];
+  V_NLI  -> V_AGR  [color="#FB8C00"];
+  V_CLIP -> V_AGR  [color="#FB8C00", style="dashed"];
+  V_AGR  -> V_REV  [color="#FB8C00"];
+  V_REV  -> G_GEN  [color="#FB8C00", label="edit", dir=both, arrowtail=none];
+
+  /* Finalization & evaluation */
+  G_GEN  -> E_OUT  [color="#90A4AE"];
+  E_OUT  -> E_MET  [color="#90A4AE"];
+  E_MET  -> E_LOG  [color="#90A4AE", style="dashed"];
+
+  /* Optional / context edges (dotted) */
+  S_KB   -> R_RET  [style=dotted, color="#7E57C2", label="external snippets"];
+  S_IMG  -> V_CLIP [style=dashed, color="#FFB74D"];
+  G_GEN  -> V_CLIP [style=dashed, color="#FFB74D"];
+  R_RET  -> E_MET  [style=dotted, color="#90A4AE"];
+  R_RET  -> E_LOG  [style=dotted, color="#90A4AE"];
 }
