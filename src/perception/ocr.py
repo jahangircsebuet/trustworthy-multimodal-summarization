@@ -2,6 +2,8 @@ import os, json
 from typing import List
 from PIL import Image
 import pytesseract
+import requests
+from io import BytesIO
 
 try:
     import easyocr
@@ -9,17 +11,32 @@ try:
 except Exception:
     _EASY = None
 
+def load_image(path: str):
+    if path.startswith("http://") or path.startswith("https://"):
+        response = requests.get(path)
+        response.raise_for_status()
+        return Image.open(BytesIO(response.content))
+    else:
+        return Image.open(path)
+
 def run_ocr(image_paths: List[str]) -> List[dict]:
     out = []
     for p in image_paths:
         text = ""
         try:
-            text = pytesseract.image_to_string(Image.open(p))
+            img = load_image(p)
+            text = pytesseract.image_to_string(img)
         except Exception:
             pass
         if not text and _EASY:
             try:
-                res = _EASY.readtext(p, detail=0)
+                if p.startswith("http://") or p.startswith("https://"):
+                    img = load_image(p)
+                    img.save("tmp_ocr_img.jpg")
+                    res = _EASY.readtext("tmp_ocr_img.jpg", detail=0)
+                    os.remove("tmp_ocr_img.jpg")
+                else:
+                    res = _EASY.readtext(p, detail=0)
                 text = "\n".join(res)
             except Exception:
                 pass
