@@ -1,0 +1,120 @@
+digraph GMMS_FullDiagram {
+  graph [fontname="Helvetica", dpi=110, pad="0.2", nodesep="0.25", ranksep="0.45"];
+  rankdir=LR;
+  fontsize=10;
+  node  [shape=rect, fontsize=10, fontname="Helvetica", style="filled,rounded"];
+
+  /* =============== Legend (Top) =============== */
+  subgraph cluster_legend {
+    label="Legend (Top)";
+    style="rounded,dashed"; color="#B0BEC5"; fillcolor="#FAFAFA";
+    LG_S [label="🧺 Inputs from platform",           shape=note, fillcolor="#F5F5F5"];
+    LG_P [label="🧩 Perception [1A–2]\nTranslate, OCR, Caption, ASR, Pack", shape=note, fillcolor="#E3F2FD"];
+    LG_R [label="🔎 Retrieval [3–6]\nChunk, Embed, Index, Retrieve",         shape=note, fillcolor="#EDE7F6"];
+    LG_G [label="✍️ Generation [7–8]\nPrompt, Draft",                        shape=note, fillcolor="#E8F5E9"];
+    LG_V [label="🛡️ Guards [9–14]\nQG, QA, NLI, CLIP*, Aggregate, Revise",  shape=note, fillcolor="#FFF3E0"];
+    LG_E [label="📊 Evaluation [15–17]\nOutput, Metrics, Logs",               shape=note, fillcolor="#ECEFF1"];
+    { rank=same; LG_S; LG_P; LG_R; LG_G; LG_V; LG_E }
+  }
+
+  /* =============== Data Sources =============== */
+  subgraph cluster_sources {
+    label="📥 Data Sources [0]";
+    style=rounded; color="#B0BEC5"; fillcolor="#F5F5F5";
+    S_TEXT  [label="[0] 📝 Social Post Text",    fillcolor="#FFFFFF", color="#90A4AE", shape=folder];
+    S_IMG   [label="[0] 🖼️ Images / Memes",     fillcolor="#FFFFFF", color="#CFD8DC"];
+    S_VID   [label="[0] 🎥 Short Videos",       fillcolor="#FFFFFF", color="#CFD8DC"];
+    S_KB    [label="[0*] 📚 External KB (optional)", fillcolor="#FFFFFF", color="#CFD8DC", shape=cylinder];
+  }
+
+  /* =============== Perception & Normalization =============== */
+  subgraph cluster_perception {
+    label="🧩 Perception & Normalization";
+    style=rounded; color="#90CAF9"; fillcolor="#E3F2FD";
+    P_TRN  [label="[1A] 🈶 Translate → EN (opt.)",    fillcolor="#E3F2FD", color="#64B5F6"];
+    P_OCR  [label="[1B] 🔡 OCR (Tesseract/EasyOCR)",   fillcolor="#E3F2FD", color="#64B5F6"];
+    P_CAP  [label="[1C] 🖼️ Captioning (BLIP/BLIP-2)", fillcolor="#E3F2FD", color="#64B5F6"];
+    P_ASR  [label="[1D] 🎙️ ASR (Faster-Whisper)",     fillcolor="#E3F2FD", color="#64B5F6"];
+    P_PACK [label="[2]  🧺 Pack Textbag",              fillcolor="#BBDEFB", color="#42A5F5"];
+  }
+
+  /* =============== Retrieval =============== */
+  subgraph cluster_retrieval {
+    label="🔎 Retrieval";
+    style=rounded; color="#B39DDB"; fillcolor="#EDE7F6";
+    R_CHK  [label="[3] ✂️ Chunk to Passages",  fillcolor="#EDE7F6", color="#9575CD"];
+    R_EMB  [label="[4] 🧬 Embed (MiniLM)",     fillcolor="#EDE7F6", color="#9575CD"];
+    R_IDX  [label="[5] 📦 FAISS Index",        fillcolor="#D1C4E9", color="#7E57C2", shape=cylinder];
+    R_RET  [label="[6] 🔍 Retrieve k Snippets",fillcolor="#D1C4E9", color="#7E57C2"];
+  }
+
+  /* =============== Grounded Generation =============== */
+  subgraph cluster_generation {
+    label="✍️ Grounded Generation";
+    style=rounded; color="#A5D6A7"; fillcolor="#E8F5E9";
+    G_PR   [label="[7] 🧾 Prompt Builder\n(EVIDENCE + [refN])", fillcolor="#E8F5E9", color="#81C784"];
+    G_GEN  [label="[8] 📝 Draft Summary (Flan-T5)",            fillcolor="#C8E6C9", color="#66BB6A"];
+  }
+
+  /* =============== Safety Guards & Revision =============== */
+  subgraph cluster_guards {
+    label="🛡️ Safety Guards & Revision";
+    style=rounded; color="#FFCC80"; fillcolor="#FFF3E0";
+    V_QG   [label="[9] ❓ QG (T5)",                    fillcolor="#FFF3E0", color="#FFB74D"];
+    V_QA   [label="[10] ✅ QA over Evidence",          fillcolor="#FFE0B2", color="#FFA726"];
+    V_NLI  [label="[11] ⚖️ NLI (MNLI)",               fillcolor="#FFE0B2", color="#FFA726"];
+    V_CLIP [label="[12*] 🖼️🔗 CLIP Consistency (opt.)", fillcolor="#FFF8E1", color="#FFB74D", style="filled,rounded,dashed"];
+    V_AGR  [label="[13] 🧮 Guard Aggregation",        fillcolor="#FFE0B2", color="#FB8C00"];
+    V_REV  [label="[14] 🔁 LLM Revision",             fillcolor="#FFCC80", color="#F57C00"];
+  }
+
+  /* =============== Evaluation & Logging =============== */
+  subgraph cluster_eval {
+    label="📊 Evaluation & Logging";
+    style=rounded; color="#B0BEC5"; fillcolor="#ECEFF1";
+    E_OUT  [label="[15] ✅ Final Trusted Summary", shape=doubleoctagon, fillcolor="#CFD8DC", color="#90A4AE"];
+    E_MET  [label="[16] 📈 Metrics (ROUGE/BERT/Guard)", fillcolor="#ECEFF1", color="#90A4AE"];
+    E_LOG  [label="[17] 🗄️ Artifacts (prompts/indexes/\ndrafts/revisions/metrics)", shape=cylinder, fillcolor="#ECEFF1", color="#90A4AE"];
+  }
+
+  /* =============== Main Flow (solid) =============== */
+  S_TEXT -> P_TRN  [color="#90A4AE"];
+  S_IMG  -> P_OCR  [color="#90A4AE"];
+  S_IMG  -> P_CAP  [color="#90A4AE"];
+  S_VID  -> P_ASR  [color="#90A4AE"];
+
+  P_TRN  -> P_PACK [color="#42A5F5"];
+  P_OCR  -> P_PACK [color="#42A5F5"];
+  P_CAP  -> P_PACK [color="#42A5F5"];
+  P_ASR  -> P_PACK [color="#42A5F5"];
+
+  P_PACK -> R_CHK  [color="#42A5F5", label="textbag.txt"];
+  R_CHK  -> R_EMB  [color="#7E57C2"];
+  R_EMB  -> R_IDX  [color="#7E57C2"];
+  R_IDX  -> R_RET  [color="#7E57C2", label="top-k"];
+
+  R_RET  -> G_PR   [color="#7E57C2", label="evidence [ref1..N]"];
+  G_PR   -> G_GEN  [color="#66BB6A", label="prompt"];
+
+  /* Guards driving revision */
+  G_GEN  -> V_QG   [color="#FB8C00"];
+  G_GEN  -> V_NLI  [color="#FB8C00"];
+  G_GEN  -> V_QA   [color="#FB8C00"];
+  V_QA   -> V_AGR  [color="#FB8C00"];
+  V_NLI  -> V_AGR  [color="#FB8C00"];
+  V_CLIP -> V_AGR  [color="#FB8C00", style="dashed"];
+  V_AGR  -> V_REV  [color="#FB8C00"];
+  V_REV  -> G_GEN  [color="#FB8C00", label="edit", dir=both, arrowtail=none];
+
+  /* Finalization & evaluation */
+  G_GEN  -> E_OUT  [color="#90A4AE"];
+  E_OUT  -> E_MET  [color="#90A4AE"];
+  E_MET  -> E_LOG  [color="#90A4AE", style="dashed"];
+
+  /* Optional / context edges (dotted) */
+  S_KB   -> R_RET  [style=dotted, color="#7E57C2", label="external snippets"];
+  S_IMG  -> V_CLIP [style=dashed, color="#FFB74D"];
+  G_GEN  -> V_CLIP [style=dashed, color="#FFB74D"];
+  R_RET  -> E_MET  [style=dotted, color="#90A4AE"];
+  R_RET  -> E_LOG  [style=dotted, color="#90A4AE"];
+}

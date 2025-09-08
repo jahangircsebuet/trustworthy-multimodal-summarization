@@ -23,6 +23,7 @@ def caption_images(image_paths: List[str], max_new_tokens=40) -> List[Dict]:
             res = _captioner(img, max_new_tokens=max_new_tokens)
             cap = res[0]["generated_text"].strip()
         except Exception as e:
+            print(f"[warn] caption failed for {p}: {e}")
             cap = ""
         out.append({"path": p, "caption": cap})
     return out
