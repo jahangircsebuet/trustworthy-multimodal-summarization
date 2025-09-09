@@ -1,4 +1,3 @@
-# run_social.py
 import os
 from trainer.utils import load_yaml
 from data_mix.dataset_loaders import load_social_datasets
@@ -6,11 +5,11 @@ from data_mix.mixer import build_mixed_dataset
 from trainer.train_sft import train
 
 def main():
-
     cfg = load_yaml("configs/social_only.yaml")
-    # Load social datasets (Reddit TIFU + optional TweetSumm)
+
     social = list(load_social_datasets(cfg))
     news = []
+
     dset = build_mixed_dataset(
         social_sources=social,
         news_sources=news,

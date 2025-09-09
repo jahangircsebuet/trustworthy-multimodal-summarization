@@ -1,4 +1,3 @@
-# run_mixed.py
 import os
 from trainer.utils import load_yaml
 from data_mix.dataset_loaders import load_social_datasets, load_news_datasets
@@ -7,8 +6,10 @@ from trainer.train_sft import train
 
 def main():
     cfg = load_yaml("configs/mixed_domain.yaml")
+
     social = list(load_social_datasets(cfg))
     news   = list(load_news_datasets(cfg))
+
     dset = build_mixed_dataset(
         social_sources=social,
         news_sources=news,
