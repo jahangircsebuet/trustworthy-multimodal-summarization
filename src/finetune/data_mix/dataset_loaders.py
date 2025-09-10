@@ -32,9 +32,10 @@ def load_reddit_tifu(split: str = "train") -> Dataset:
         ds = _keep_only(ds, {"text", "title"})
         return _rename_then_drop(ds, {"text": "source", "title": "target"})
 
-    if {"document", "tldr"}.issubset(cols):
-        ds = _keep_only(ds, {"document", "tldr"})
-        return _rename_then_drop(ds, {"document": "source", "tldr": "target"})
+    # there is no document, tldr in dataset 
+    # if {"document", "tldr"}.issubset(cols):
+    #     ds = _keep_only(ds, {"document", "tldr"})
+    #     return _rename_then_drop(ds, {"document": "source", "tldr": "target"})
 
     raise ValueError(
         f"Unsupported Reddit-TIFU schema: {sorted(cols)}. "

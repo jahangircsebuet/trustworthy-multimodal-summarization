@@ -1,5 +1,6 @@
 import os
 import torch
+import warnings
 from typing import Dict, Any, Tuple
 from transformers import (
     AutoModelForCausalLM,
@@ -11,9 +12,31 @@ from peft import LoraConfig, get_peft_model
 from .utils import DataCollatorForStrings, add_special_tokens_if_missing
 from .eval_metrics import compute_metrics
 
+# Load environment variables from .env file
+from dotenv import load_dotenv, find_dotenv
+load_dotenv(find_dotenv(), override=True)
+
+# Suppress specific warnings
+warnings.filterwarnings("ignore", message=".*tokenizer.*deprecated.*")
+warnings.filterwarnings("ignore", message=".*No label_names provided.*")
+warnings.filterwarnings("ignore", message=".*max_length.*ignored.*")
 
 def load_model_and_tokenizer(model_name: str, gradient_checkpointing: bool = True, bf16: bool = True):
-    tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=True)
+    # Get Hugging Face token from .env file
+    hf_token = os.environ.get("HUGGINGFACE_HUB_TOKEN")
+    if not hf_token:
+        print("Warning: HUGGINGFACE_HUB_TOKEN not found in .env file")
+    
+    # Load tokenizer with token
+    tokenizer = AutoTokenizer.from_pretrained(
+        model_name, 
+        use_fast=True,
+        token=hf_token
+    )
+    
+    # Ensure pad token is set
+    if tokenizer.pad_token_id is None:
+        tokenizer.pad_token = tokenizer.eos_token
 
     use_bf16 = bool(bf16 and torch.cuda.is_available())
     # Prefer dtype on newer TF; older still accept torch_dtype (may warn but OK)
@@ -23,6 +46,7 @@ def load_model_and_tokenizer(model_name: str, gradient_checkpointing: bool = Tru
             dtype=torch.bfloat16 if use_bf16 else torch.float32,
             low_cpu_mem_usage=True,
             device_map="auto",
+            token=hf_token,  # Use token for model loading
         )
     except TypeError:
         model = AutoModelForCausalLM.from_pretrained(
@@ -30,6 +54,7 @@ def load_model_and_tokenizer(model_name: str, gradient_checkpointing: bool = Tru
             torch_dtype=torch.bfloat16 if use_bf16 else torch.float32,
             low_cpu_mem_usage=True,
             device_map="auto",
+            token=hf_token,  # Use token for model loading
         )
 
     if gradient_checkpointing:
@@ -39,6 +64,10 @@ def load_model_and_tokenizer(model_name: str, gradient_checkpointing: bool = Tru
             model.config.use_cache = False
         except Exception:
             pass
+
+    # Set pad token ID in model config
+    if hasattr(model, "config"):
+        model.config.pad_token_id = tokenizer.pad_token_id
 
     added = add_special_tokens_if_missing(tokenizer)
     if added > 0:
@@ -63,9 +92,7 @@ def maybe_wrap_lora(model, lora_cfg: dict):
 
 def _build_training_args(cfg: Dict[str, Any]) -> TrainingArguments:
     """
-    Construct TrainingArguments, auto-selecting the correct strategy key:
-      - Try eval_strategy (Transformers v5)
-      - Fallback to evaluation_strategy (Transformers v4)
+    Construct TrainingArguments with proper evaluation settings
     """
     base_kwargs: Dict[str, Any] = dict(
         output_dir=cfg["output_dir"],
@@ -79,28 +106,26 @@ def _build_training_args(cfg: Dict[str, Any]) -> TrainingArguments:
         lr_scheduler_type=cfg["lr_scheduler_type"],
         bf16=cfg.get("bf16", True),
         logging_steps=cfg["logging_steps"],
-        save_strategy="steps",
         save_steps=cfg["save_steps"],
         eval_steps=cfg["eval_steps"],
         report_to=["none"],
         max_steps=cfg.get("max_steps", -1),
-        load_best_model_at_end=cfg.get("load_best_model_at_end", True),
+        load_best_model_at_end=cfg.get("load_best_model_at_end", False),  # Disable to avoid issues
         metric_for_best_model=cfg.get("metric_for_best_model", "eval_loss"),
         greater_is_better=cfg.get("greater_is_better", False),
-        remove_unused_columns=False,  # let our custom collator handle columns
+        remove_unused_columns=False,
+        # Force evaluation to happen
+        evaluation_strategy="steps",
+        save_strategy="steps",
+        logging_strategy="steps",
     )
 
-    # Allow explicit overrides if present
-    if "logging_strategy" in cfg:
-        base_kwargs["logging_strategy"] = cfg["logging_strategy"]
-    if "save_strategy" in cfg:
-        base_kwargs["save_strategy"] = cfg["save_strategy"]
-
-    strat_val = cfg.get("evaluation_strategy", cfg.get("eval_strategy", "steps"))
+    # Try with eval_strategy first (newer versions)
     try:
-        return TrainingArguments(eval_strategy=strat_val, **base_kwargs)  # v5
+        return TrainingArguments(eval_strategy="steps", **base_kwargs)
     except TypeError:
-        return TrainingArguments(evaluation_strategy=strat_val, **base_kwargs)  # v4
+        # Fallback for older versions
+        return TrainingArguments(evaluation_strategy="steps", **base_kwargs)
 
 
 def _decode_predictions_and_refs(predictions, label_ids, tokenizer) -> Tuple[list, list]:
@@ -152,17 +177,77 @@ def train(dataset_dict, cfg):
         preds_text, refs_text = _decode_predictions_and_refs(p.predictions, p.label_ids, tokenizer)
         return compute_metrics(preds=preds_text, refs=refs_text)
 
-    trainer = Trainer(
-        model=model,
-        args=args,
-        train_dataset=dataset_dict["train"],
-        eval_dataset=dataset_dict["validation"],
-        tokenizer=tokenizer,        # OK on v4; v5 deprecates but still works
-        data_collator=collator,
-        compute_metrics=_metrics_fn,
-    )
+    # Debug: Check the dataset structure
+    print("Dataset structure:")
+    print(f"Train dataset columns: {dataset_dict['train'].column_names}")
+    print(f"Train dataset size: {len(dataset_dict['train'])}")
+    print(f"Validation dataset size: {len(dataset_dict['validation'])}")
+    
+    # Check if we need to rename columns
+    train_dataset = dataset_dict["train"]
+    if "input_ids_text" in train_dataset.column_names and "labels_text" in train_dataset.column_names:
+        print("Renaming columns to match collator expectations...")
+        train_dataset = train_dataset.rename_columns({
+            "input_ids_text": "source",
+            "labels_text": "target"
+        })
+        val_dataset = dataset_dict["validation"].rename_columns({
+            "input_ids_text": "source", 
+            "labels_text": "target"
+        })
+        print(f"Train dataset columns after renaming: {train_dataset.column_names}")
+    else:
+        val_dataset = dataset_dict["validation"]
+
+    # Use processing_class instead of tokenizer for newer transformers versions
+    try:
+        trainer = Trainer(
+            model=model,
+            args=args,
+            train_dataset=train_dataset,
+            eval_dataset=val_dataset,
+            processing_class=tokenizer,  # Use processing_class instead of tokenizer
+            data_collator=collator,
+            compute_metrics=_metrics_fn,
+        )
+    except TypeError:
+        # Fallback for older versions
+        trainer = Trainer(
+            model=model,
+            args=args,
+            train_dataset=train_dataset,
+            eval_dataset=val_dataset,
+            tokenizer=tokenizer,  # Fallback for older versions
+            data_collator=collator,
+            compute_metrics=_metrics_fn,
+        )
+
+    print(f"Training configuration:")
+    print(f"  - Total training steps: {len(train_dataset) // (cfg['per_device_train_batch_size'] * cfg['gradient_accumulation_steps']) * cfg['num_train_epochs']}")
+    print(f"  - Evaluation every: {cfg['eval_steps']} steps")
+    print(f"  - Logging every: {cfg['logging_steps']} steps")
 
     trainer.train()
+    
+    # Final evaluation
+    print("Running final evaluation...")
+    final_metrics = trainer.evaluate()
+    print(f"Final evaluation metrics: {final_metrics}")
+    
+    # Save final metrics to CSV
+    import csv
+    csv_path = os.path.join(cfg["output_dir"], "final_metrics.csv")
+    with open(csv_path, "w", newline="") as f:
+        w = csv.writer(f)
+        w.writerow(["metric", "value"])
+        for k, v in final_metrics.items():
+            try:
+                v = float(v)
+            except Exception:
+                v = str(v)
+            w.writerow([k, v])
+    print(f"Saved final metrics to {csv_path}")
+
     trainer.save_model(cfg["output_dir"])
     if hasattr(model, "peft_config"):  # LoRA
         model.save_pretrained(cfg["output_dir"])

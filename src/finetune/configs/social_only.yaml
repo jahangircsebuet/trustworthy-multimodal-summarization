@@ -4,7 +4,7 @@ seed: 42
 
 # data
 datasets:
-  reddit_tifu: { use: true, subset: "short", split: "train" }  # "short" has TL;DR
+  reddit_tifu: { use: true, subset: "long", split: "train" }  # "short" has TL;DR
   tweetsumm:   { use: false, path: "data/tweetsumm.jsonl" }    # optional local JSONL
 
 max_source_len: 2048

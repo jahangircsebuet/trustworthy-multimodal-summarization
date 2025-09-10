@@ -1,0 +1,44 @@
+base_model: "meta-llama/Meta-Llama-3-8B-Instruct"
+output_dir: "outputs/social_only_large"
+seed: 42
+
+# data - Use larger dataset
+datasets:
+  reddit_tifu: { use: true, subset: "long", split: "train" }  # Use "long" instead of "short"
+  tweetsumm:   { use: false, path: "data/tweetsumm.jsonl" }
+
+max_source_len: 2048
+max_target_len: 96
+train_ratio: 0.95  # Use more data for training
+val_ratio: 0.05    # Use more data for validation
+
+# sampling / curriculum
+sampling:
+  use_domain_tags: true
+  social_to_news_ratio: [1.0, 0.0]
+
+# training - More frequent logging and evaluation
+bf16: true
+per_device_train_batch_size: 1
+per_device_eval_batch_size: 1
+gradient_accumulation_steps: 8  # Reduced to get more steps
+num_train_epochs: 3  # More epochs
+learning_rate: 2.0e-4
+weight_decay: 0.01
+warmup_ratio: 0.05
+lr_scheduler_type: "cosine"
+save_steps: 100
+eval_steps: 50      # Evaluate every 50 steps
+logging_steps: 10   # Log every 10 steps
+gradient_checkpointing: true
+max_steps: -1
+
+# lora
+lora:
+  enabled: true
+  r: 16
+  lora_alpha: 32
+  lora_dropout: 0.05
+  target_modules: ["q_proj","k_proj","v_proj","o_proj","gate_proj","up_proj","down_proj"]
+  bias: "none"
+  task_type: "CAUSAL_LM"
