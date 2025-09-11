@@ -34,3 +34,6 @@ if __name__ == "__main__":
                    help="Hugging Face model id to use (overrides cfg['base_model'])")
     args = p.parse_args()
     main(args.base_model)
+
+
+#CUDA_VISIBLE_DEVICES=2 nohup python run_social_large.py > /home/tahad/trustworthy-multimodal-summarization/outputs/results/logs/fine_tune_social_large_Llama-2-13b-chat-hf.log 2>&1 &

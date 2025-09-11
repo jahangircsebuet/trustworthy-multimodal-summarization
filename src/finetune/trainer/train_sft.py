@@ -7,7 +7,9 @@ from transformers import (
     AutoTokenizer,
     TrainingArguments,
     Trainer,
+    __version__ as transformers_version,
 )
+from packaging import version
 from peft import LoraConfig, get_peft_model
 from .utils import DataCollatorForStrings, add_special_tokens_if_missing
 from .eval_metrics import compute_metrics
@@ -21,32 +23,28 @@ warnings.filterwarnings("ignore", message=".*tokenizer.*deprecated.*")
 warnings.filterwarnings("ignore", message=".*No label_names provided.*")
 warnings.filterwarnings("ignore", message=".*max_length.*ignored.*")
 
+
 def load_model_and_tokenizer(model_name: str, gradient_checkpointing: bool = True, bf16: bool = True):
-    # Get Hugging Face token from .env file
     hf_token = os.environ.get("HUGGINGFACE_HUB_TOKEN")
     if not hf_token:
         print("Warning: HUGGINGFACE_HUB_TOKEN not found in .env file")
     
-    # Load tokenizer with token
     tokenizer = AutoTokenizer.from_pretrained(
         model_name, 
         use_fast=True,
         token=hf_token
     )
-    
-    # Ensure pad token is set
     if tokenizer.pad_token_id is None:
         tokenizer.pad_token = tokenizer.eos_token
 
     use_bf16 = bool(bf16 and torch.cuda.is_available())
-    # Prefer dtype on newer TF; older still accept torch_dtype (may warn but OK)
     try:
         model = AutoModelForCausalLM.from_pretrained(
             model_name,
             dtype=torch.bfloat16 if use_bf16 else torch.float32,
             low_cpu_mem_usage=True,
             device_map="auto",
-            token=hf_token,  # Use token for model loading
+            token=hf_token,
         )
     except TypeError:
         model = AutoModelForCausalLM.from_pretrained(
@@ -54,18 +52,16 @@ def load_model_and_tokenizer(model_name: str, gradient_checkpointing: bool = Tru
             torch_dtype=torch.bfloat16 if use_bf16 else torch.float32,
             low_cpu_mem_usage=True,
             device_map="auto",
-            token=hf_token,  # Use token for model loading
+            token=hf_token,
         )
 
     if gradient_checkpointing:
         model.gradient_checkpointing_enable()
-        # avoid HF warning & ensure compatibility
         try:
             model.config.use_cache = False
         except Exception:
             pass
 
-    # Set pad token ID in model config
     if hasattr(model, "config"):
         model.config.pad_token_id = tokenizer.pad_token_id
 
@@ -92,7 +88,8 @@ def maybe_wrap_lora(model, lora_cfg: dict):
 
 def _build_training_args(cfg: Dict[str, Any]) -> TrainingArguments:
     """
-    Construct TrainingArguments with proper evaluation settings
+    Construct TrainingArguments with proper evaluation settings.
+    Handles both new (eval_strategy) and old (evaluation_strategy) Transformers versions.
     """
     base_kwargs: Dict[str, Any] = dict(
         output_dir=cfg["output_dir"],
@@ -110,37 +107,27 @@ def _build_training_args(cfg: Dict[str, Any]) -> TrainingArguments:
         eval_steps=cfg["eval_steps"],
         report_to=["none"],
         max_steps=cfg.get("max_steps", -1),
-        load_best_model_at_end=cfg.get("load_best_model_at_end", False),  # Disable to avoid issues
+        load_best_model_at_end=cfg.get("load_best_model_at_end", False),
         metric_for_best_model=cfg.get("metric_for_best_model", "eval_loss"),
         greater_is_better=cfg.get("greater_is_better", False),
         remove_unused_columns=False,
-        # Force evaluation to happen
-        evaluation_strategy="steps",
         save_strategy="steps",
         logging_strategy="steps",
     )
 
-    # Try with eval_strategy first (newer versions)
-    try:
+    if version.parse(transformers_version) >= version.parse("4.30.0"):
         return TrainingArguments(eval_strategy="steps", **base_kwargs)
-    except TypeError:
-        # Fallback for older versions
+    else:
         return TrainingArguments(evaluation_strategy="steps", **base_kwargs)
 
 
 def _decode_predictions_and_refs(predictions, label_ids, tokenizer) -> Tuple[list, list]:
-    """
-    Robust decoding:
-      - If predictions are logits, argmax -> ids
-      - If tuple, take first item
-      - Replace -100 in labels with pad/eos id before decoding
-    """
     pred_ids = predictions
     if isinstance(pred_ids, tuple):
         pred_ids = pred_ids[0]
     if isinstance(pred_ids, torch.Tensor):
         pred_ids = pred_ids.detach().cpu().numpy()
-    import numpy as np  # noqa
+    import numpy as np
     if getattr(pred_ids, "ndim", 0) == 3:
         pred_ids = pred_ids.argmax(-1)
 
@@ -165,7 +152,6 @@ def train(dataset_dict, cfg):
     )
     model = maybe_wrap_lora(model, cfg["lora"])
 
-    # Build collator
     collator = DataCollatorForStrings(
         tokenizer=tokenizer,
         max_length=cfg["max_source_len"],
@@ -177,13 +163,11 @@ def train(dataset_dict, cfg):
         preds_text, refs_text = _decode_predictions_and_refs(p.predictions, p.label_ids, tokenizer)
         return compute_metrics(preds=preds_text, refs=refs_text)
 
-    # Debug: Check the dataset structure
     print("Dataset structure:")
     print(f"Train dataset columns: {dataset_dict['train'].column_names}")
     print(f"Train dataset size: {len(dataset_dict['train'])}")
     print(f"Validation dataset size: {len(dataset_dict['validation'])}")
     
-    # Check if we need to rename columns
     train_dataset = dataset_dict["train"]
     if "input_ids_text" in train_dataset.column_names and "labels_text" in train_dataset.column_names:
         print("Renaming columns to match collator expectations...")
@@ -199,42 +183,38 @@ def train(dataset_dict, cfg):
     else:
         val_dataset = dataset_dict["validation"]
 
-    # Use processing_class instead of tokenizer for newer transformers versions
     try:
         trainer = Trainer(
             model=model,
             args=args,
             train_dataset=train_dataset,
             eval_dataset=val_dataset,
-            processing_class=tokenizer,  # Use processing_class instead of tokenizer
+            processing_class=tokenizer,
             data_collator=collator,
             compute_metrics=_metrics_fn,
         )
     except TypeError:
-        # Fallback for older versions
         trainer = Trainer(
             model=model,
             args=args,
             train_dataset=train_dataset,
             eval_dataset=val_dataset,
-            tokenizer=tokenizer,  # Fallback for older versions
+            tokenizer=tokenizer,
             data_collator=collator,
             compute_metrics=_metrics_fn,
         )
 
-    print(f"Training configuration:")
+    print("Training configuration:")
     print(f"  - Total training steps: {len(train_dataset) // (cfg['per_device_train_batch_size'] * cfg['gradient_accumulation_steps']) * cfg['num_train_epochs']}")
     print(f"  - Evaluation every: {cfg['eval_steps']} steps")
     print(f"  - Logging every: {cfg['logging_steps']} steps")
 
     trainer.train()
     
-    # Final evaluation
     print("Running final evaluation...")
     final_metrics = trainer.evaluate()
     print(f"Final evaluation metrics: {final_metrics}")
     
-    # Save final metrics to CSV
     import csv
     csv_path = os.path.join(cfg["output_dir"], "final_metrics.csv")
     with open(csv_path, "w", newline="") as f:
@@ -249,6 +229,6 @@ def train(dataset_dict, cfg):
     print(f"Saved final metrics to {csv_path}")
 
     trainer.save_model(cfg["output_dir"])
-    if hasattr(model, "peft_config"):  # LoRA
+    if hasattr(model, "peft_config"):
         model.save_pretrained(cfg["output_dir"])
     tokenizer.save_pretrained(cfg["output_dir"])
