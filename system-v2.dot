@@ -1,0 +1,103 @@
+digraph GMMS_4Stage_Vertical_NoLegend {
+  graph [fontname="Helvetica", dpi=110, pad="0.25", nodesep="0.40", ranksep="0.60"];
+  
+    rankdir=TB;
+  fontsize=16;
+  node  [shape=rect, fontsize=16, fontname="Helvetica", style="filled,rounded"];
+
+  /* =============== Data Sources =============== */
+  subgraph cluster_sources {
+    label="📥 Data Sources";
+    style=rounded; color="#B0BEC5"; fillcolor="#F5F5F5";
+    rankdir=TB;
+    SRC_TXT [label="📝 Social Post Text",   fillcolor="#FFFFFF", color="#90A4AE", shape=folder];
+    SRC_IMG [label="🖼️ Images (optional)", fillcolor="#FFFFFF", color="#CFD8DC"];
+    WEB     [label="🌐 External Web (Google Search, live)", shape=cylinder, fillcolor="#FFFFFF", color="#CFD8DC"];
+  }
+
+  /* =============== (1) Multimodal Ingest =============== */
+  subgraph cluster_ingest {
+    label="🧩 (1) Multimodal Ingest";
+    style=rounded; color="#90CAF9"; fillcolor="#E3F2FD";
+    rankdir=TB;
+    I_LANG [label="Lang ID + Normalize",          fillcolor="#E3F2FD", color="#64B5F6"];
+    I_CAPT [label="Caption Images (BLIP-2)",      fillcolor="#E3F2FD", color="#64B5F6"];
+    I_MERGE[label="Merge → consolidated text  T′", fillcolor="#BBDEFB", color="#42A5F5"];
+    I_ENTS [label="Named-Entity Extraction",      fillcolor="#E3F2FD", color="#64B5F6"];
+  }
+
+  /* =============== (2) Knowledge Retrieval (Live) =============== */
+  subgraph cluster_retrieval {
+    label="🔎 (2) Knowledge Retrieval (Live Web)";
+    style=rounded; color="#B39DDB"; fillcolor="#EDE7F6";
+
+    subgraph retrieval_vertical {
+      rankdir=LR;
+      
+
+      R_QRULE [label="Rule-based query variants\n(entities/events)", fillcolor="#EDE7F6", color="#9575CD"];
+      R_QLLM  [label="LLM-prompted query (1 variant)", fillcolor="#EDE7F6", color="#9575CD"];
+      R_XL    [label="(Optional) x-lingual query ↔ EN", fillcolor="#EDE7F6", color="#9575CD"];
+      R_GG    [label="Live Google Search → top-N",      fillcolor="#D1C4E9", color="#7E57C2"];
+      R_RR    [label="SBERT re-rank + keyword filter\ndeduplicate",        fillcolor="#D1C4E9", color="#7E57C2"];
+      R_KEEP  [label="Keep k high-quality snippets\nD = {d₁…d_k}",        fillcolor="#D1C4E9", color="#7E57C2"];
+
+        R_QRULE -> R_XL -> R_GG -> R_RR -> R_KEEP;
+      R_QLLM  -> R_XL;
+
+    }
+  }
+
+  /* =============== (3) Draft Summarization =============== */
+  subgraph cluster_gen {
+    label="✍️ (3) Draft Summarization";
+    style=rounded; color="#A5D6A7"; fillcolor="#E8F5E9";
+    rankdir=TB;
+    
+    G_PROMPT [label="Prompt Builder:\nPost T′ + Evidence D\n“Use references for accuracy.”", fillcolor="#E8F5E9", color="#81C784"];
+    G_MT5   [label="mT5 (primary)\n(nucleus p=0.9 or beam b=4)",         fillcolor="#C8E6C9", color="#66BB6A"];
+    G_GPT4  [label="GPT-4 baseline (no retrieval)\n(for comparison)",     fillcolor="#C8E6C9", color="#66BB6A"];
+    G_SD    [label="Draft summary  S_draft",                              fillcolor="#A5D6A7", color="#388E3C"];
+
+    G_PROMPT -> G_MT5 -> G_SD;
+    G_GPT4 -> G_SD;
+  }
+
+  /* =============== (4) Verification & Refinement =============== */
+  subgraph cluster_verify {
+    label="🛡️ (4) Verification & Refinement";
+    style=rounded; color="#FFCC80"; fillcolor="#FFF3E0";
+
+    subgraph verify_vertical {
+      rankdir=TB;
+      
+
+      V_QG   [label="CoVe-style QG (q≤5)",          fillcolor="#FFF3E0", color="#FFB74D"];
+      V_QA   [label="QA over post + snippets",       fillcolor="#FFE0B2", color="#FFA726"];
+      V_NLI  [label="NLI consistency check",         fillcolor="#FFE0B2", color="#FFA726"];
+      V_AGR  [label="Aggregate flags",               fillcolor="#FFE0B2", color="#FB8C00"];
+      V_EDIT [label="Edit/remove unsupported spans\n→ Final summary  S_final", fillcolor="#FFCC80", color="#F57C00"];
+
+       V_QG -> V_QA -> V_NLI -> V_AGR -> V_EDIT;
+    }
+  }
+
+   /* =============== (5) Evaluation & Logging =============== */
+  subgraph cluster_eval {
+    label="📊 Evaluation & Logging";
+    style=rounded; color="#B0BEC5"; fillcolor="#ECEFF1";
+
+    subgraph eval_horizontal {
+      rankdir=TB;  /* inner boxes side by side */
+      
+
+      E_OUT [label="✅ Final Summary  S_final", shape=doubleoctagon, fillcolor="#CFD8DC", color="#90A4AE"];
+      E_MET [label="Metrics:\nROUGE-L, BERTScore,\nQAFactEval, NLI, (CLIPScore)", fillcolor="#ECEFF1", color="#90A4AE"];
+      E_LOG [label="Logs:\nqueries • URLs • snippet hashes • prompts", shape=cylinder, fillcolor="#ECEFF1", color="#90A4AE"];
+
+       E_OUT -> E_MET -> E_LOG [color="#90A4AE"];
+    }
+  }
+
+  
+}
