@@ -1,5 +1,6 @@
-base_model: "meta-llama/Meta-Llama-3-8B-Instruct"
-output_dir: "outputs/social_only_large"
+#base_model: "meta-llama/Meta-Llama-3-8B-Instruct"  # meta-llama/Llama-2-13b-chat-hf  # meta-llama/Llama-2-7b-chat-hf   #mistralai/Mixtral-8x7B-v0.1 #mistralai/Mistral-7B-Instruct-v0.2
+base_model: "mistralai/Ministral-8B-Instruct-2410"
+output_dir: "outputs/Ministral-8B-Instruct-2410"
 seed: 42
 
 # data - Use larger dataset
@@ -22,7 +23,7 @@ bf16: true
 per_device_train_batch_size: 1
 per_device_eval_batch_size: 1
 gradient_accumulation_steps: 8  # Reduced to get more steps
-num_train_epochs: 3  # More epochs
+num_train_epochs: 5  # More epochs
 learning_rate: 2.0e-4
 weight_decay: 0.01
 warmup_ratio: 0.05

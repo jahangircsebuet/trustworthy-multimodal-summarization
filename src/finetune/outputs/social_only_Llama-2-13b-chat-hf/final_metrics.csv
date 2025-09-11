@@ -1,0 +1,10 @@
+metric,value
+eval_loss,1.290368914604187
+eval_rouge1,0.04029230029709238
+eval_rouge2,0.023185668914159657
+eval_rougeL,0.03446731158557983
+eval_bertscore_f1,-0.2931056320667267
+eval_runtime,6.2128
+eval_samples_per_second,4.99
+eval_steps_per_second,4.99
+epoch,3.0
